@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  
+  <!-- for scalar_rgb -->
+
+  <Type Name="mitsuba::Vector&lt;*,2&gt;">
+	<DisplayString>{m_data[0]}, {m_data[1]}</DisplayString>
+  </Type>
+
+  <Type Name="mitsuba::Vector&lt;*,3&gt;">
+	<DisplayString>{m_data[0]}, {m_data[1], {m_data[2]}</DisplayString>
+  </Type>
+
+  <Type Name="mitsuba::Vector&lt;*,4&gt;">
+	<DisplayString>{m_data[0]}, {m_data[1], {m_data[2]}, {m_data[3]}</DisplayString>
+  </Type>
+
+  <Type Name="mitsuba::Color&lt;*,2&gt;">
+	<DisplayString>{m.m128_f32[0]}, {m.m128_f32[1]}</DisplayString>
+  </Type>
+
+  <Type Name="mitsuba::Color&lt;*,3&gt;">
+	<DisplayString>{m.m128_f32[0]}, {m.m128_f32[1]}, {m.m128_f32[2]}</DisplayString>
+  </Type>
+
+  <Type Name="mitsuba::Color&lt;*,4&gt;">
+	<DisplayString>{m.m128_f32[0]}, {m.m128_f32[1]}, {m.m128_f32[2]}, {m.m128_f32[3]}</DisplayString>
+  </Type>
+
+</AutoVisualizer>
