@@ -386,7 +386,9 @@ SamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     ScalarVector2f scale = 1.f / ScalarVector2f(film->crop_size()),
                    offset = -ScalarVector2f(film->crop_offset()) * scale;
 
-    Vector2f sample_pos   = pos + sampler->next_2d(active),
+    // [NOTE] Sample position
+    bool random_offset = false;
+    Vector2f sample_pos   = pos + (random_offset ? sampler->next_2d(active) : Vector2f(.0f)),
              adjusted_pos = dr::fmadd(sample_pos, scale, offset);
 
     Point2f aperture_sample(.5f);
@@ -401,6 +403,7 @@ SamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     if constexpr (is_spectral_v<Spectrum>)
         wavelength_sample = sampler->next_1d(active);
 
+    
     auto [ray, ray_weight] = sensor->sample_ray_differential(
         time, wavelength_sample, adjusted_pos, aperture_sample);
 
@@ -409,8 +412,17 @@ SamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
 
     const Medium *medium = sensor->medium();
 
-    auto [spec, valid] = sample(scene, sampler, ray, medium,
-               aovs + (has_alpha ? 5 : 4) /* skip R,G,B,[A],W */, active);
+    // [NOTE] Sample
+    Spectrum spec = { 0 };
+    SamplingIntegrator<Float, Spectrum>::Mask valid = { true };
+
+    // if (pos[0] == 590 && pos[1] == 423) 
+    {
+        auto [_spec, _valid] = sample(scene, sampler, ray, medium,
+            aovs + (has_alpha ? 5 : 4) /* skip R,G,B,[A],W */, active);
+        spec = _spec;
+        valid = _valid;
+    }
 
     UnpolarizedSpectrum spec_u = unpolarized_spectrum(ray_weight * spec);
 
