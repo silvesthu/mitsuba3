@@ -77,6 +77,7 @@ add_library(mitsuba-render OBJECT
   volume.cpp       ${INC_DIR}/volume.h
   volumegrid.cpp   ${INC_DIR}/volumegrid.h
   ${LIBRENDER_EXTRA_SRC}
+  mitsuba-render.natvis
 )
 
 target_compile_definitions(mitsuba-render
