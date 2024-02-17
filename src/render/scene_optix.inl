@@ -14,8 +14,8 @@
 
 NAMESPACE_BEGIN(mitsuba)
 
-#if !defined(NDEBUG)
-#  define MI_OPTIX_DEBUG 1
+#if !defined(NDEBUG) || defined(MI_ENABLE_OPTIX_DEBUG_VALIDATION)
+#define MI_ENABLE_OPTIX_DEBUG_VALIDATION_ON
 #endif
 
 #ifdef _MSC_VER
@@ -87,12 +87,12 @@ size_t init_optix_config(bool has_meshes, bool has_others, bool has_instances,
 
         OptixModuleCompileOptions module_compile_options { };
         module_compile_options.maxRegisterCount = OPTIX_COMPILE_DEFAULT_MAX_REGISTER_COUNT;
-    #if !defined(MI_OPTIX_DEBUG)
+    #if !defined(MI_ENABLE_OPTIX_DEBUG_VALIDATION_ON)
         module_compile_options.optLevel         = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
         module_compile_options.debugLevel       = OPTIX_COMPILE_DEBUG_LEVEL_NONE;
     #else
         module_compile_options.optLevel         = OPTIX_COMPILE_OPTIMIZATION_LEVEL_0;
-        module_compile_options.debugLevel       = OPTIX_COMPILE_DEBUG_LEVEL_MINIMAL;
+        module_compile_options.debugLevel       = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
     #endif
 
         config.pipeline_compile_options.usesMotionBlur     = false;
@@ -119,13 +119,13 @@ size_t init_optix_config(bool has_meshes, bool has_others, bool has_instances,
             traversable_flag = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
         config.pipeline_compile_options.traversableGraphFlags = traversable_flag;
 
-    #if !defined(MI_OPTIX_DEBUG)
+    #if !defined(MI_ENABLE_OPTIX_DEBUG_VALIDATION_ON)
         config.pipeline_compile_options.exceptionFlags = OPTIX_EXCEPTION_FLAG_NONE;
     #else
         config.pipeline_compile_options.exceptionFlags =
-                OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW
-                | OPTIX_EXCEPTION_FLAG_TRACE_DEPTH
-                | OPTIX_EXCEPTION_FLAG_DEBUG;
+                OPTIX_EXCEPTION_FLAG_DEBUG |
+                OPTIX_EXCEPTION_FLAG_TRACE_DEPTH |
+                OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
     #endif
 
         unsigned int prim_flags = 0;
@@ -553,11 +553,6 @@ MI_VARIANT void Scene<Float, Spectrum>::accel_release_gpu() {
         // Ensure all ray tracing kernels are terminated before releasing the scene
         dr::sync_thread();
 
-        /* Decrease the reference count of the IAS handle variable. This will
-           trigger the release of the OptiX acceleration data structure if no
-           ray tracing calls are pending. */
-        m_accel_handle = 0;
-
         OptixSceneState *s = (OptixSceneState *) m_accel;
 
         if (s->own_sbt) {
@@ -567,6 +562,11 @@ MI_VARIANT void Scene<Float, Spectrum>::accel_release_gpu() {
             (void) UInt32::steal(s->sbt_jit_index);
         }
         m_accel = nullptr;
+
+        /* Decrease the reference count of the IAS handle variable. This will
+           trigger the release of the OptiX acceleration data structure if no
+           ray tracing calls are pending. */
+        m_accel_handle = 0;
     }
 }
 
